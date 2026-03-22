@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Price Predictor</title>
+
+    <!-- FIXED CSS PATH -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+</head>
+
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="card mt-50" style="width: 100%;">
+
+            <div class="card-header text-center">
+                <h1>Car Price Predictor</h1>
+            </div>
+
+            <div class="card-body text-center">
+                <h5>Enter details to predict car price</h5>
+
+                <form>
+
+                    <div class="form-group">
+                        <label><b>Company</b></label>
+                        <select class="form-control" id="company" name="company"
+                                onchange="load_car_models(this.id,'car_models')">
+                            {% for company in companies %}
+                            <option value="{{ company }}">{{ company }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><b>Model</b></label>
+                        <select class="form-control" id="car_models" name="car_models"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><b>Year</b></label>
+                        <select class="form-control" name="year">
+                            {% for year in years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><b>Fuel Type</b></label>
+                        <select class="form-control" name="fuel_type">
+                            {% for fuel in fuel_types %}
+                            <option value="{{ fuel }}">{{ fuel }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><b>Kilometers Driven</b></label>
+                        <input type="number" class="form-control" name="kilo_driven" required>
+                    </div>
+
+                    <!-- FIXED BUTTON -->
+                    <button type="button" class="btn btn-primary" onclick="send_data()">
+                        Predict Price
+                    </button>
+
+                </form>
+
+                <br>
+                <h4 id="prediction"></h4>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function load_car_models(company_id, car_model_id) {
+    var company = document.getElementById(company_id);
+    var car_model = document.getElementById(car_model_id);
+
+    car_model.innerHTML = "";
+
+    {% for company in companies %}
+        if (company.value == "{{ company }}") {
+            {% for model in car_models %}
+                {% if company in model %}
+                    var option = document.createElement("option");
+                    option.value = "{{ model }}";
+                    option.innerHTML = "{{ model }}";
+                    car_model.add(option);
+                {% endif %}
+            {% endfor %}
+        }
+    {% endfor %}
+}
+
+async function send_data() {
+    const form = document.querySelector('form');
+    const formData = new FormData(form);
+
+    document.getElementById('prediction').innerHTML = "⏳ Predicting...";
+
+    try {
+        const response = await fetch("/predict", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            document.getElementById('prediction').innerHTML = "Error: " + data.error;
+        } else {
+            document.getElementById('prediction').innerHTML =
+                "💰 Price: ₹ " + data.price;
+        }
+
+    } catch (err) {
+        document.getElementById('prediction').innerHTML = "Server error!";
+    }
+}
+</script>
+
+</body>
+</html>
